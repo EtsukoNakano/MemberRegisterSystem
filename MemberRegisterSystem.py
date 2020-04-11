@@ -13,14 +13,13 @@ class MemberRegisterApp(AppBase):
         '''コンストラクタでDBが存在するか確認し、なければDBとテーブルを作成。
         treeviewに表示可能な文字幅も定数として定義しておく'''
         super().__init__(master)
+        self.NAME_WIDTH = 30
+        self.AGE_WIDTH  =  3
         self.db_name = "member_register.DB"
         if not SQLites.db_exist_check(self.db_name):
             SQL = "CREATE TABLE members(id INTEGER PRIMARY KEY AUTOINCREMENT, name STRING, gender STRING, age INTEGER)"
             SQLites.exec_SQL(self.db_name, SQL)
-        else:
-            pass
-        self.NAME_WIDTH = 30
-        self.AGE_WIDTH  =  3
+        
     
     def get_str_width(self, string):
         '''半角換算の文字列の幅を取得する。

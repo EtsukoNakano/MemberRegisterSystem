@@ -142,22 +142,22 @@ class AppBase(tk.Frame, metaclass=ABCMeta):
     '''以下は抽象メソッド。commandメソッドは実態を持たないため、派生クラスでoverrideさせる'''
     @abstractmethod
     def register_member(self):
-        raise NotImplementedError("未実装のメソッドがあります！")
+        raise NotImplementedError()
 
     @abstractmethod
     def update_member(self):
-        raise NotImplementedError("未実装のメソッドがあります！")
+        raise NotImplementedError()
 
     @abstractmethod
     def delete_member(self):
-        raise NotImplementedError("未実装のメソッドがあります！")
+        raise NotImplementedError()
     
     @abstractmethod
     def show_list(self):
-        raise NotImplementedError("未実装のメソッドがあります！")
+        raise NotImplementedError()
 
     @abstractmethod
     def search_cmd(self):
-        raise NotImplementedError("未実装のメソッドがあります！")
+        raise NotImplementedError()
 
     
