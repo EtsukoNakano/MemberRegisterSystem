@@ -1,14 +1,4 @@
 import sqlite3
-import os
-
-def db_exist_check(str_db_name):
-    """ paramで指定したDBが存在するかチェックし、
-    DBがあればTrue、なければFalseを返す """
-    if os.path.exists(str_db_name):
-        return True
-    else:
-        return False
-
 
 def exec_SQL(str_db_name, SQL):
     """ paramのSQLを実行し指定したDBを編集する """    

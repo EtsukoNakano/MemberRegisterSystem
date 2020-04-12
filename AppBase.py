@@ -78,22 +78,24 @@ class AppBase(tk.Frame, metaclass=ABCMeta):
         self.lst_frm = tk.Frame(self)
         self.lst_frm.pack()
 
-        # treeviewのヘッダー、表示する行数と幅を設定
+        # treeviewに表示する列数と幅、ヘッダーを設定
         self.tree = ttk.Treeview(self.lst_frm)
-        self.tree["column"] = (1, 2, 3, 4)
-        self.tree["show"] = "headings"
+        self.tree["column"] = (1, 2, 3, 4) # 列数を定義
+        self.tree["show"] = "headings"     # ヘッダーを表示する
+        # 各列のヘッダー設定
         self.tree.heading(1, text="ID")
         self.tree.heading(2, text="名前")
         self.tree.heading(3, text="性別")
         self.tree.heading(4, text="年齢")
-        self.tree.column(1, width=40, anchor=tk.CENTER)
+        # 各列の幅とtreeview内の値の表示位置を設定
+        self.tree.column(1, width=50, anchor=tk.CENTER)
         self.tree.column(2, width=190)
-        self.tree.column(3, width=45, anchor=tk.CENTER)
-        self.tree.column(4, width=40, anchor=tk.CENTER)
-
+        self.tree.column(3, width=50, anchor=tk.CENTER)
+        self.tree.column(4, width=50, anchor=tk.CENTER)
         # 表の中身を等幅フォントで表示するための設定
         style = ttk.Style()
         style.configure("Treeview",font=("MS Gothic",9))
+        
         self.tree.pack()
         self.back_menu_btn.pack()
 

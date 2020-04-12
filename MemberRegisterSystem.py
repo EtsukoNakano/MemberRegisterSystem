@@ -1,10 +1,10 @@
 # SQLite3とTreeviewによる会員登録アプリ
-import SQLites              # 自作モジュールのインポート
-from AppBase import AppBase # 基底クラスのインポート
+import SQLites                           # 自作モジュールのインポート
+from AppBase import AppBase              # 基底クラスのインポート
 import tkinter as tk
 from tkinter import messagebox as mbox
-import tkinter.ttk as ttk   # Treeviewを利用
-import traceback
+import tkinter.ttk as ttk                # TreeviewとStyleを利用
+import os                                # DBの存在を確認する
 from unicodedata import east_asian_width # 文字幅判定に利用
 
 # 基底クラスを継承した会員登録クラスを定義
@@ -16,7 +16,7 @@ class MemberRegisterApp(AppBase):
         self.NAME_WIDTH = 30
         self.AGE_WIDTH  =  3
         self.db_name = "member_register.DB"
-        if not SQLites.db_exist_check(self.db_name):
+        if not os.path.exists(self.db_name):
             SQL = "CREATE TABLE members(id INTEGER PRIMARY KEY AUTOINCREMENT, name STRING, gender STRING, age INTEGER)"
             SQLites.exec_SQL(self.db_name, SQL)
         
@@ -76,88 +76,15 @@ class MemberRegisterApp(AppBase):
                 return name, age
         elif judge == False:
             raise ValueError(msg)
-
-
-    def register_member(self):
-        '''self.reg_btnの登録モードcommand。
-        名前と年齢を取得するメソッドでは、値が不正な場合に例外が発生する'''
-        try:
-            name, age = self.get_valid_name_and_age()
-            gender = self.gender_sv.get()
-            SQL = "INSERT INTO members(name, gender, age) VALUES('{0}', '{1}', {2})"
-            msg = f"この会員を登録しますか？\n氏名：{name}\n性別：{gender}\n年齢：{age}歳"
-            if mbox.askokcancel("登録確認", msg): # OK選択ならSQLを実行 
-                SQLites.exec_SQL(self.db_name, SQL.format(name, gender, age))
-                mbox.showinfo("登録完了", "会員情報を登録しました。\n登録情報は会員一覧で確認できます。")
-                self.clear_widgets()
-        except Exception as e:
-            mbox.showerror('警告', f"会員を登録できません！\n{e}")
-
-
-    def update_member(self):
-        '''self.reg_btnの修正モードcommand。
-        名前と年齢を取得するメソッドでは、値が不正な場合に例外が発生する'''
-        try:
-            name, age = self.get_valid_name_and_age()
-            gender = self.gender_sv.get()
-            id = self.header_lbl.cget("text").split(" ")[-1] # ヘッダーのIDをcgetメソッドで取得
-            SQL = "UPDATE members SET name='{0}', gender='{1}', age={2} WHERE id={3}"
-            msg = f"ID：{id} の会員を修正しますか？\n氏名：{name}\n性別：{gender}\n年齢：{age}歳"
-            if mbox.askokcancel("修正確認", msg): # OK選択ならSQLを実行
-                SQLites.exec_SQL(self.db_name, SQL.format(name, gender, age, id))
-                mbox.showinfo("修正完了", "会員情報を修正しました。\n会員情報は会員一覧で確認できます。")
-                self.clear_widgets()
-        except Exception as e:
-            mbox.showerror('警告', f"情報を修正できません！\n{e}")
-
-
-    def delete_member(self):
-        '''self.del_btnのcommand。
-        idは編集できず前処理で該当者が確定しているため、tryを噛ませる必要はない'''
-        id = self.header_lbl.cget("text").split(" ")[-1] # ヘッダーのIDをcgetメソッドで取得
-        SQL = "DELETE FROM members WHERE id={0}"
-        if mbox.askokcancel("削除確認", f"ID：{id} の会員を削除しますか？"): # OK選択ならSQLを実行
-            SQLites.exec_SQL(self.db_name, SQL.format(id))
-            mbox.showinfo("削除完了", "会員情報を削除しました。\n会員情報は会員一覧で確認できます。")
-            self.clear_widgets()
     
 
     def get_members(self):
-        '''会員がいればlistを、いなければException例外を投げる'''
+        '''会員がいればlistを、いなければException例外を投げる
+        ※リストは[{ID, 名前, 性別, 年齢}...]で構成されている'''
         members = SQLites.get_list_table(self.db_name, "members")
         if len(members) == 0:
             raise Exception("会員は1人も登録されていません！")
         return members
-        
-    
-    def search_widgets(self):
-        '''検索ウィジェット生成commandをオーバーライド。
-        はじめに会員情報を取得して、会員がいれば会員検索用ウィジェットを生成。
-        会員がいなければ警告し、ウィジェットを生成せずメニュー表示のままにする'''
-        try:
-            self.get_members()
-            super().search_widgets()
-        except Exception as e:
-            mbox.showerror('警告', e)
-    
-
-    def set_treeview(self):
-        '''get_membersで全ての会員情報を取得しTreeviewにセットする。
-        会員がいない場合はException例外が発生する'''
-        members = self.get_members()
-        for member in members:
-            self.tree.insert("", "end", values=member)
-
-
-    def show_list(self):
-        '''一覧表示ボタン(self.show_lst_btn)のcommand。
-        ウィジェットを生成し、会員情報をtreeviewにセットする'''
-        try:
-            self.show_list_widgets()
-            self.set_treeview()
-        except Exception as e:
-            mbox.showerror('警告', e)
-            self.clear_widgets()
     
 
     def search_member(self):
@@ -196,8 +123,83 @@ class MemberRegisterApp(AppBase):
             return member      # リストを返す
     
 
+    def set_treeview(self):
+        '''get_membersで全ての会員情報を取得しTreeviewにセットする。
+        会員がいない場合はException例外が発生する'''
+        members = self.get_members()
+        for member in members:
+            self.tree.insert("", "end", values=member)
+
+
+    # 以下は抽象基底クラスのメソッドoverride
+    def register_member(self):
+        '''self.reg_btnの登録モードcommand(抽象メソッド)
+        名前と年齢を取得するメソッドでは、値が不正な場合に例外が発生する'''
+        try:
+            name, age = self.get_valid_name_and_age()
+            gender = self.gender_sv.get()
+            SQL = "INSERT INTO members(name, gender, age) VALUES('{0}', '{1}', {2})"
+            msg = f"この会員を登録しますか？\n氏名：{name}\n性別：{gender}\n年齢：{age}歳"
+            if mbox.askokcancel("登録確認", msg): # OK選択ならSQLを実行 
+                SQLites.exec_SQL(self.db_name, SQL.format(name, gender, age))
+                mbox.showinfo("登録完了", "会員情報を登録しました。\n登録情報は会員一覧で確認できます。")
+                self.clear_widgets()
+        except Exception as e:
+            mbox.showerror('警告', f"会員を登録できません！\n{e}")
+
+
+    def update_member(self):
+        '''self.reg_btnの修正モードcommand(抽象メソッド)
+        名前と年齢を取得するメソッドでは、値が不正な場合に例外が発生する'''
+        try:
+            name, age = self.get_valid_name_and_age()
+            gender = self.gender_sv.get()
+            id = self.header_lbl.cget("text").split(" ")[-1] # ヘッダーのIDをcgetメソッドで取得
+            SQL = "UPDATE members SET name='{0}', gender='{1}', age={2} WHERE id={3}"
+            msg = f"ID：{id} の会員を修正しますか？\n氏名：{name}\n性別：{gender}\n年齢：{age}歳"
+            if mbox.askokcancel("修正確認", msg): # OK選択ならSQLを実行
+                SQLites.exec_SQL(self.db_name, SQL.format(name, gender, age, id))
+                mbox.showinfo("修正完了", "会員情報を修正しました。\n会員情報は会員一覧で確認できます。")
+                self.clear_widgets()
+        except Exception as e:
+            mbox.showerror('警告', f"情報を修正できません！\n{e}")
+
+
+    def delete_member(self):
+        '''self.del_btnのcommand(抽象メソッド)
+        idは編集できず前処理で該当者が確定しているため、tryを噛ませる必要はない'''
+        id = self.header_lbl.cget("text").split(" ")[-1] # ヘッダーのIDをcgetメソッドで取得
+        SQL = "DELETE FROM members WHERE id={0}"
+        if mbox.askokcancel("削除確認", f"ID：{id} の会員を削除しますか？"): # OK選択ならSQLを実行
+            SQLites.exec_SQL(self.db_name, SQL.format(id))
+            mbox.showinfo("削除完了", "会員情報を削除しました。\n会員情報は会員一覧で確認できます。")
+            self.clear_widgets()
+        
+    
+    def search_widgets(self):
+        '''検索ウィジェット生成commandをoverride。
+        はじめに会員情報を取得して、会員がいれば会員検索用ウィジェットを生成。
+        会員がいなければ警告し、ウィジェットを生成せずメニュー表示のままにする'''
+        try:
+            self.get_members()
+            super().search_widgets()
+        except Exception as e:
+            mbox.showerror('警告', e)
+
+
+    def show_list(self):
+        '''一覧表示ボタン(self.show_lst_btn)のcommand(抽象メソッド)
+        ウィジェットを生成し、会員情報をtreeviewにセットする'''
+        try:
+            self.show_list_widgets()
+            self.set_treeview()
+        except Exception as e:
+            mbox.showerror('警告', e)
+            self.clear_widgets()
+    
+
     def search_cmd(self):
-        '''検索ボタン(self.search_btn)のcommand'''
+        '''検索ボタン(self.search_btn)のcommand(抽象メソッド)'''
         try:
             member = self.search_member()
             mbox.showinfo("検索完了", "該当する会員を見つけました。")
@@ -213,7 +215,7 @@ class MemberRegisterApp(AppBase):
     
 root = tk.Tk()
 root.title("会員登録フォーム")
-root.geometry("320x275+500+200")
+root.geometry("345x275+500+200")
 app = MemberRegisterApp(root)
 app.mainloop()
 
